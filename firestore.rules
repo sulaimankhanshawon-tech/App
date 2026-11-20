@@ -1,0 +1,656 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidStaffDocId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 150 && id.matches('^[a-zA-Z0-9_\\.\\-@]+$');
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() &&
+        ('email_verified' in request.auth.token) &&
+        request.auth.token.email_verified == true &&
+        ('email' in request.auth.token) &&
+        request.auth.token.email == 'sulaimankhanshawon@gmail.com';
+    }
+
+    function hasActiveStaffByUid() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active == true;
+    }
+
+    function hasActiveStaffByEmail() {
+      return isSignedIn() &&
+        ('email_verified' in request.auth.token) &&
+        request.auth.token.email_verified == true &&
+        ('email' in request.auth.token) &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.active == true;
+    }
+
+    function staffRoleValue() {
+      return isBootstrappedAdmin() ? 'OWNER' : (
+        hasActiveStaffByUid()
+          ? get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role
+          : (hasActiveStaffByEmail()
+              ? get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role
+              : 'NONE')
+      );
+    }
+
+    function isOwner() {
+      return isBootstrappedAdmin() || staffRoleValue() in ['OWNER', 'ADMIN'];
+    }
+
+    function isAdminOrManager() {
+      return isOwner() || staffRoleValue() == 'MANAGER';
+    }
+
+    function isStaff() {
+      return isAdminOrManager() || staffRoleValue() in ['WAITER', 'KITCHEN', 'CASHIER'];
+    }
+
+    function isRestaurantId(val) {
+      return val is string && val == 'asil_al_tawooq_jeddah';
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidUserProfile(data) {
+      return data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+        data.staffRole in ['CUSTOMER', 'OWNER', 'MANAGER', 'WAITER', 'KITCHEN', 'ADMIN', 'CASHIER'] &&
+        (!('activeTableLabel' in data) || (data.activeTableLabel is string && data.activeTableLabel.size() <= 30)) &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidRoleDef(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.code in ['OWNER', 'MANAGER', 'WAITER', 'KITCHEN'] &&
+        data.titleEn is string && data.titleEn.size() >= 1 && data.titleEn.size() <= 60 &&
+        data.titleAr is string && data.titleAr.size() >= 1 && data.titleAr.size() <= 60 &&
+        data.permissions is list && data.permissions.size() <= 20 &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCategory(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.code is string && data.code.size() >= 1 && data.code.size() <= 40 &&
+        data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 80 &&
+        data.nameAr is string && data.nameAr.size() >= 1 && data.nameAr.size() <= 80 &&
+        data.defaultStation in ['GRILL', 'SHAWARMA', 'SANDWICH', 'PASTA', 'DRINKS', 'GENERAL'] &&
+        data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 100 &&
+        data.active is bool &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidKitchenStation(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.code in ['GRILL', 'SHAWARMA', 'SANDWICH', 'PASTA', 'DRINKS', 'GENERAL'] &&
+        data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 80 &&
+        data.nameAr is string && data.nameAr.size() >= 1 && data.nameAr.size() <= 80 &&
+        data.active is bool &&
+        data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 50 &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidProductImage(data) {
+      return isRestaurantId(data.restaurantId) &&
+        (!('productId' in data) || (data.productId is string && data.productId.size() <= 128)) &&
+        data.mimeType is string && data.mimeType in ['image/jpeg', 'image/png', 'image/webp'] &&
+        data.width is int && data.width >= 1 && data.width <= 4096 &&
+        data.height is int && data.height >= 1 && data.height <= 4096 &&
+        data.sizeBytes is int && data.sizeBytes >= 10 && data.sizeBytes <= 750000 &&
+        data.base64Data is string && data.base64Data.size() >= 10 && data.base64Data.size() <= 950000 &&
+        data.uploadedBy is string && data.uploadedBy.size() >= 1 && data.uploadedBy.size() <= 128 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidMenuItem(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 120 &&
+        data.nameAr is string && data.nameAr.size() >= 1 && data.nameAr.size() <= 120 &&
+        data.descriptionEn is string && data.descriptionEn.size() <= 500 &&
+        (!('descriptionAr' in data) || (data.descriptionAr is string && data.descriptionAr.size() <= 500)) &&
+        (!('ingredientsEn' in data) || (data.ingredientsEn is string && data.ingredientsEn.size() <= 400)) &&
+        (!('ingredientsAr' in data) || (data.ingredientsAr is string && data.ingredientsAr.size() <= 400)) &&
+        (!('allergens' in data) || (data.allergens is list && data.allergens.size() <= 10)) &&
+        data.category in [
+          'CHARCOAL_GRILLS', 'CHICKEN_TAWOOK', 'SHAWARMA', 'RICE_MEALS',
+          'SANDWICHES', 'PASTA', 'APPETIZERS', 'SAUCES', 'COLD_DRINKS', 'SPECIAL_DEALS'
+        ] &&
+        data.kitchenStation in ['GRILL', 'SHAWARMA', 'SANDWICH', 'PASTA', 'DRINKS', 'GENERAL'] &&
+        data.spiceLevel in ['MILD', 'MEDIUM', 'HOT'] &&
+        data.portionSize is string && data.portionSize.size() >= 1 && data.portionSize.size() <= 80 &&
+        data.priceSar is number && data.priceSar >= 0 && data.priceSar <= 5000 &&
+        data.prepMinutes is int && data.prepMinutes >= 1 && data.prepMinutes <= 180 &&
+        data.available is bool &&
+        data.hidden is bool &&
+        data.featured is bool &&
+        (!('isMealDeal' in data) || data.isMealDeal is bool) &&
+        (!('dealSummary' in data) || (data.dealSummary is string && data.dealSummary.size() <= 300)) &&
+        (!('offerLabel' in data) || (data.offerLabel is string && data.offerLabel.size() <= 80)) &&
+        data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 40 &&
+        (!('imageId' in data) || (data.imageId is string && data.imageId.size() <= 128)) &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 500)) &&
+        (!('sizes' in data) || (data.sizes is list && data.sizes.size() <= 8)) &&
+        (!('extras' in data) || (data.extras is list && data.extras.size() <= 15)) &&
+        data.demoData is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidRestaurantTable(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.label is string && data.label.size() >= 1 && data.label.size() <= 30 &&
+        data.zone is string && data.zone.size() >= 1 && data.zone.size() <= 60 &&
+        data.capacity is int && data.capacity >= 1 && data.capacity <= 30 &&
+        (!('active' in data) || data.active is bool) &&
+        data.status in [
+          'AVAILABLE', 'OCCUPIED', 'ORDERING', 'FOOD_PREP',
+          'FOOD_SERVED', 'BILL_REQUESTED', 'NEEDS_ASSISTANCE'
+        ] &&
+        (!('assignedWaiterId' in data) || (data.assignedWaiterId is string && data.assignedWaiterId.size() <= 128)) &&
+        data.assignedWaiterName is string && data.assignedWaiterName.size() <= 80 &&
+        (!('currentOrderId' in data) || (data.currentOrderId is string && data.currentOrderId.size() <= 128)) &&
+        data.billStatus in ['NONE', 'OPEN', 'REQUESTED', 'PAID'] &&
+        data.needsAssistance is bool &&
+        data.activeRequestCount is int && data.activeRequestCount >= 0 && data.activeRequestCount <= 100 &&
+        (!('qrCodeId' in data) || (data.qrCodeId is string && data.qrCodeId.size() <= 128)) &&
+        data.qrPayload is string && data.qrPayload.size() >= 1 && data.qrPayload.size() <= 200 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidQrCode(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.tableId is string && isValidId(data.tableId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.tableLabel is string && data.tableLabel.size() >= 1 && data.tableLabel.size() <= 30 &&
+        data.qrPayload is string && data.qrPayload.size() >= 1 && data.qrPayload.size() <= 200 &&
+        data.active is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidOrder(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.tableId is string && isValidId(data.tableId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.orderNumber is string && data.orderNumber.size() >= 1 && data.orderNumber.size() <= 40 &&
+        (!('clientRequestId' in data) || (data.clientRequestId is string && data.clientRequestId.size() <= 80)) &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 100 &&
+        data.status in ['NEW_ORDER', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'PAID', 'CANCELLED'] &&
+        data.priority in ['NORMAL', 'HIGH', 'URGENT'] &&
+        (!('waiterConfirmed' in data) || data.waiterConfirmed is bool) &&
+        (!('waiterConfirmedBy' in data) || (data.waiterConfirmedBy is string && data.waiterConfirmedBy.size() <= 100)) &&
+        data.items is list && data.items.size() >= 1 && data.items.size() <= 40 &&
+        (!('specialInstructions' in data) || (data.specialInstructions is string && data.specialInstructions.size() <= 400)) &&
+        (!('allergySummary' in data) || (data.allergySummary is string && data.allergySummary.size() <= 300)) &&
+        data.subtotalSar is number && data.subtotalSar >= 0 && data.subtotalSar <= 50000 &&
+        data.vatSar is number && data.vatSar >= 0 && data.vatSar <= 10000 &&
+        data.discountSar is number && data.discountSar >= 0 && data.discountSar <= 10000 &&
+        data.tipSar is number && data.tipSar >= 0 && data.tipSar <= 10000 &&
+        data.totalSar is number && data.totalSar >= 0 && data.totalSar <= 60000 &&
+        data.paidAmountSar is number && data.paidAmountSar >= 0 && data.paidAmountSar <= 60000 &&
+        data.paymentStatus in ['UNPAID', 'PARTIAL', 'PAID'] &&
+        (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 40)) &&
+        (!('assignedWaiterName' in data) || (data.assignedWaiterName is string && data.assignedWaiterName.size() <= 80)) &&
+        data.demoData is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidOrderItemRecord(data) {
+      return data.orderId is string && isValidId(data.orderId) &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.tableId is string && isValidId(data.tableId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 128 &&
+        data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 120 &&
+        (!('nameAr' in data) || (data.nameAr is string && data.nameAr.size() <= 120)) &&
+        data.kitchenStation in ['GRILL', 'SHAWARMA', 'SANDWICH', 'PASTA', 'DRINKS', 'GENERAL'] &&
+        data.quantity is int && data.quantity >= 1 && data.quantity <= 100 &&
+        data.unitPriceSar is number && data.unitPriceSar >= 0 && data.unitPriceSar <= 5000 &&
+        data.lineTotalSar is number && data.lineTotalSar >= 0 && data.lineTotalSar <= 50000 &&
+        data.itemStatus in ['NEW_ORDER', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'PAID', 'CANCELLED'] &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidServiceRequest(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.tableId is string && isValidId(data.tableId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.requestType in ['CALL_WAITER', 'WATER', 'EXTRA_SAUCE', 'CUTLERY', 'CLEANING', 'BILL', 'OTHER'] &&
+        (!('note' in data) || (data.note is string && data.note.size() <= 300)) &&
+        data.status in ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'] &&
+        (!('assignedWaiterName' in data) || (data.assignedWaiterName is string && data.assignedWaiterName.size() <= 80)) &&
+        data.demoData is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidPayment(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.orderId is string && isValidId(data.orderId) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.amountSar is number && data.amountSar >= 0 && data.amountSar <= 60000 &&
+        data.vatSar is number && data.vatSar >= 0 && data.vatSar <= 10000 &&
+        data.tipSar is number && data.tipSar >= 0 && data.tipSar <= 10000 &&
+        data.method in ['MADA', 'APPLE_PAY', 'GOOGLE_PAY', 'CARD', 'BANK_TRANSFER', 'CASH_REQUEST'] &&
+        data.splitMode in ['FULL', 'EQUAL', 'BY_ITEMS'] &&
+        data.gatewayProvider is string && data.gatewayProvider.size() >= 1 && data.gatewayProvider.size() <= 40 &&
+        data.gatewayTransactionId is string && data.gatewayTransactionId.size() >= 1 && data.gatewayTransactionId.size() <= 120 &&
+        data.status in ['VERIFIED_PAID', 'PENDING_CASH_COLLECTION', 'PENDING_BANK_TRANSFER', 'FAILED'] &&
+        (!('receiptEmail' in data) || (data.receiptEmail is string && data.receiptEmail.size() <= 150)) &&
+        (!('selectedItemIds' in data) || (data.selectedItemIds is list && data.selectedItemIds.size() <= 40)) &&
+        data.demoData is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidLoyaltyProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+        data.points is int && data.points >= 0 && data.points <= 1000000 &&
+        data.totalSpentSar is number && data.totalSpentSar >= 0 && data.totalSpentSar <= 10000000 &&
+        data.tier in ['BRONZE', 'SILVER', 'GOLD', 'ROYAL'] &&
+        (!('birthdayMmDd' in data) || (data.birthdayMmDd is string && data.birthdayMmDd.size() <= 10)) &&
+        data.redeemedRewards is int && data.redeemedRewards >= 0 && data.redeemedRewards <= 10000 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidReview(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        isRestaurantId(data.restaurantId) &&
+        (!('orderId' in data) || (data.orderId is string && data.orderId.size() <= 128)) &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 100 &&
+        data.overallRating is int && data.overallRating >= 1 && data.overallRating <= 5 &&
+        data.foodRating is int && data.foodRating >= 1 && data.foodRating <= 5 &&
+        data.serviceRating is int && data.serviceRating >= 1 && data.serviceRating <= 5 &&
+        data.comment is string && data.comment.size() <= 500 &&
+        data.published is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidGameSession(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.hostUserId is string && data.hostUserId.size() >= 1 && data.hostUserId.size() <= 128 &&
+        data.roomCode is string && data.roomCode.size() >= 3 && data.roomCode.size() <= 16 &&
+        data.tableNumber is int && data.tableNumber >= 1 && data.tableNumber <= 200 &&
+        data.gameType in ['TABLE_TRIVIA', 'FOOD_GUESSING', 'QUICK_QUIZ'] &&
+        data.status in ['WAITING', 'ACTIVE', 'FINISHED'] &&
+        data.currentQuestionIndex is int && data.currentQuestionIndex >= 0 && data.currentQuestionIndex <= 50 &&
+        data.playerNames is list && data.playerNames.size() >= 1 && data.playerNames.size() <= 12 &&
+        data.playerScores is map &&
+        data.participantUids is list && data.participantUids.size() >= 1 && data.participantUids.size() <= 12 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidStaffMember(data) {
+      return data.uid is string && isValidStaffDocId(data.uid) &&
+        isRestaurantId(data.restaurantId) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.role in ['OWNER', 'MANAGER', 'WAITER', 'KITCHEN', 'ADMIN', 'CASHIER'] &&
+        data.active is bool &&
+        data.assignedZone is string && data.assignedZone.size() <= 80 &&
+        data.ordersHandled is int && data.ordersHandled >= 0 && data.ordersHandled <= 1000000 &&
+        data.avgResponseSec is int && data.avgResponseSec >= 0 && data.avgResponseSec <= 86400 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidRestaurantSettings(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.restaurantNameEn is string && data.restaurantNameEn.size() >= 1 && data.restaurantNameEn.size() <= 100 &&
+        data.restaurantNameAr is string && data.restaurantNameAr.size() >= 1 && data.restaurantNameAr.size() <= 100 &&
+        data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+        data.wifiSsid is string && data.wifiSsid.size() >= 1 && data.wifiSsid.size() <= 64 &&
+        data.wifiPassword is string && data.wifiPassword.size() <= 64 &&
+        data.vatPercent is number && data.vatPercent >= 0 && data.vatPercent <= 50 &&
+        data.openingHours is string && data.openingHours.size() >= 1 && data.openingHours.size() <= 120 &&
+        data.googleReviewUrl is string && data.googleReviewUrl.size() <= 300 &&
+        data.gatewayProvider in ['MOYASAR', 'HYPERPAY', 'TAP'] &&
+        (!('gatewayPublicKey' in data) || (data.gatewayPublicKey is string && data.gatewayPublicKey.size() <= 200)) &&
+        data.gatewayMode in ['TEST', 'LIVE'] &&
+        (!('gatewayEndpoint' in data) || (data.gatewayEndpoint is string && data.gatewayEndpoint.size() <= 300)) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidNotification(data) {
+      return isRestaurantId(data.restaurantId) &&
+        data.targetRole in ['CUSTOMER', 'WAITER', 'KITCHEN', 'MANAGER', 'OWNER', 'CASHIER', 'ADMIN'] &&
+        data.targetUserId is string && data.targetUserId.size() >= 1 && data.targetUserId.size() <= 128 &&
+        data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 400 &&
+        data.category in ['ORDER', 'KITCHEN', 'DELAY', 'READY', 'REQUEST', 'PAYMENT', 'BILL', 'FEEDBACK'] &&
+        data.read is bool &&
+        data.tableNumber is int && data.tableNumber >= 0 && data.tableNumber <= 200 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdminOrManager());
+      allow list: if isSignedIn() && isAdminOrManager() && isRestaurantId(resource.data.restaurantId);
+      allow create: if isSignedIn() && isValidId(userId) &&
+        request.auth.uid == userId &&
+        incoming().uid == request.auth.uid &&
+        isValidUserProfile(incoming());
+      allow update: if isSignedIn() && isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt && (
+          isAdminOrManager() || (
+            request.auth.uid == userId &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'email', 'staffRole', 'activeTableLabel', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isOwner() && isValidId(userId);
+    }
+
+    match /roles/{roleId} {
+      allow get: if isSignedIn() && isValidId(roleId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create, update: if isOwner() && isValidId(roleId) && isValidRoleDef(incoming());
+      allow delete: if false;
+    }
+
+    match /categories/{categoryId} {
+      allow get: if isSignedIn() && isValidId(categoryId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create, update: if isAdminOrManager() && isValidId(categoryId) && isValidCategory(incoming());
+      allow delete: if isAdminOrManager() && isValidId(categoryId);
+    }
+
+    match /kitchen_stations/{stationId} {
+      allow get: if isSignedIn() && isValidId(stationId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create, update: if isAdminOrManager() && isValidId(stationId) && isValidKitchenStation(incoming());
+      allow delete: if isOwner() && isValidId(stationId);
+    }
+
+    match /product_images/{imageId} {
+      allow get: if isSignedIn() && isValidId(imageId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create: if isAdminOrManager() && isValidId(imageId) && isValidProductImage(incoming());
+      allow update: if isAdminOrManager() && isValidId(imageId) &&
+        isValidProductImage(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().restaurantId == existing().restaurantId;
+      allow delete: if isAdminOrManager() && isValidId(imageId);
+    }
+
+    match /menu_items/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create: if isAdminOrManager() && isValidId(itemId) && isValidMenuItem(incoming());
+      allow update: if isAdminOrManager() && isValidId(itemId) &&
+        isValidMenuItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().restaurantId == existing().restaurantId;
+      allow delete: if isAdminOrManager() && isValidId(itemId);
+    }
+
+    match /restaurant_tables/{tableId} {
+      allow get: if isSignedIn() && isValidId(tableId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create: if isAdminOrManager() && isValidId(tableId) && isValidRestaurantTable(incoming());
+      allow update: if isSignedIn() && isValidId(tableId) && isValidRestaurantTable(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().restaurantId == existing().restaurantId && (
+          isStaff() || (
+            (!('active' in existing()) || existing().active == true) &&
+            incoming().tableNumber == existing().tableNumber &&
+            incoming().label == existing().label &&
+            incoming().qrPayload == existing().qrPayload &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'currentOrderId', 'billStatus', 'needsAssistance', 'activeRequestCount', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isAdminOrManager() && isValidId(tableId);
+    }
+
+    match /qr_codes/{qrId} {
+      allow get: if isSignedIn() && isValidId(qrId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create, update: if isAdminOrManager() && isValidId(qrId) &&
+        exists(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)) &&
+        get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data.tableNumber == incoming().tableNumber &&
+        isValidQrCode(incoming());
+      allow delete: if isAdminOrManager() && isValidId(qrId);
+    }
+
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().userId == request.auth.uid || isStaff());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || (isStaff() && isRestaurantId(resource.data.restaurantId)));
+      allow create: if isSignedIn() && isValidId(orderId) &&
+        incoming().userId == request.auth.uid &&
+        exists(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)) &&
+        (!('active' in get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data) ||
+          get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data.active == true) &&
+        incoming().tableNumber == get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data.tableNumber &&
+        isValidOrder(incoming());
+      allow update: if isSignedIn() && isValidId(orderId) &&
+        isValidOrder(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt && (
+          isStaff() || (
+            existing().userId == request.auth.uid &&
+            existing().status != 'PAID' &&
+            existing().status != 'CANCELLED' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'tipSar', 'totalSar', 'paidAmountSar', 'paymentStatus', 'paymentMethod', 'status', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isAdminOrManager() && isValidId(orderId);
+    }
+
+    match /order_items/{orderItemId} {
+      allow get: if isSignedIn() && isValidId(orderItemId) && (existing().userId == request.auth.uid || isStaff());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || (isStaff() && isRestaurantId(resource.data.restaurantId)));
+      allow create: if isSignedIn() && isValidId(orderItemId) &&
+        incoming().userId == request.auth.uid &&
+        exists(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)) &&
+        isValidOrderItemRecord(incoming());
+      allow update: if isStaff() && isValidId(orderItemId) &&
+        isValidOrderItemRecord(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isAdminOrManager() && isValidId(orderItemId);
+    }
+
+    match /service_requests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId) && (existing().userId == request.auth.uid || isStaff());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || (isStaff() && isRestaurantId(resource.data.restaurantId)));
+      allow create: if isSignedIn() && isValidId(requestId) &&
+        incoming().userId == request.auth.uid &&
+        exists(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)) &&
+        (!('active' in get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data) ||
+          get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data.active == true) &&
+        incoming().tableNumber == get(/databases/$(database)/documents/restaurant_tables/$(incoming().tableId)).data.tableNumber &&
+        isValidServiceRequest(incoming());
+      allow update: if isSignedIn() && isValidId(requestId) &&
+        isValidServiceRequest(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt && (
+          isStaff() || (
+            existing().userId == request.auth.uid &&
+            existing().status != 'COMPLETED' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['note', 'status', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdminOrManager() && isValidId(requestId);
+    }
+
+    match /payments/{paymentId} {
+      allow get: if isSignedIn() && isValidId(paymentId) && (existing().userId == request.auth.uid || isStaff());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || (isStaff() && isRestaurantId(resource.data.restaurantId)));
+      allow create: if isSignedIn() && isValidId(paymentId) &&
+        incoming().userId == request.auth.uid &&
+        exists(/databases/$(database)/documents/orders/$(incoming().orderId)) &&
+        incoming().tableNumber == get(/databases/$(database)/documents/orders/$(incoming().orderId)).data.tableNumber &&
+        isValidPayment(incoming());
+      allow update: if isStaff() && isValidId(paymentId) &&
+        isValidPayment(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isAdminOrManager() && isValidId(paymentId);
+    }
+
+    match /loyalty_profiles/{userId} {
+      allow get, list: if isSignedIn() && (request.auth.uid == userId || isAdminOrManager());
+      allow create: if isSignedIn() && isValidId(userId) &&
+        request.auth.uid == userId &&
+        incoming().userId == request.auth.uid &&
+        isValidLoyaltyProfile(incoming());
+      allow update: if isSignedIn() && isValidId(userId) &&
+        isValidLoyaltyProfile(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt && (
+          isAdminOrManager() || (
+            request.auth.uid == userId &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'email', 'points', 'totalSpentSar', 'tier', 'birthdayMmDd', 'redeemedRewards', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isOwner() && isValidId(userId);
+    }
+
+    match /reviews/{reviewId} {
+      allow get: if isSignedIn() && isValidId(reviewId);
+      allow list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.published == true ||
+        isAdminOrManager()
+      );
+      allow create: if isSignedIn() && isValidId(reviewId) &&
+        incoming().userId == request.auth.uid &&
+        isValidReview(incoming());
+      allow update: if isAdminOrManager() && isValidId(reviewId) &&
+        isValidReview(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isAdminOrManager() && isValidId(reviewId);
+    }
+
+    match /game_sessions/{sessionId} {
+      allow get: if isSignedIn() && isValidId(sessionId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create: if isSignedIn() && isValidId(sessionId) &&
+        incoming().hostUserId == request.auth.uid &&
+        request.auth.uid in incoming().participantUids &&
+        isValidGameSession(incoming());
+      allow update: if isSignedIn() && isValidId(sessionId) &&
+        isValidGameSession(incoming()) &&
+        incoming().hostUserId == existing().hostUserId &&
+        incoming().createdAt == existing().createdAt &&
+        existing().status != 'FINISHED' && (
+          isAdminOrManager() ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'currentQuestionIndex', 'playerNames', 'playerScores', 'participantUids', 'updatedAt'
+          ])
+        );
+      allow delete: if isAdminOrManager() && isValidId(sessionId);
+    }
+
+    match /staff/{staffDocId} {
+      allow get: if isSignedIn() && isValidStaffDocId(staffDocId) && (
+        request.auth.uid == staffDocId ||
+        (('email_verified' in request.auth.token) && request.auth.token.email_verified == true && request.auth.token.email == staffDocId) ||
+        isAdminOrManager()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        (('email_verified' in request.auth.token) && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email) ||
+        isAdminOrManager()
+      );
+      allow create: if isValidStaffDocId(staffDocId) && isValidStaffMember(incoming()) && (
+        isOwner() ||
+        (isAdminOrManager() && !(incoming().role in ['OWNER', 'ADMIN']))
+      );
+      allow update: if isValidStaffDocId(staffDocId) &&
+        isValidStaffMember(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt && (
+          isOwner() ||
+          (isAdminOrManager() && !(incoming().role in ['OWNER', 'ADMIN']) && !(existing().role in ['OWNER', 'ADMIN']))
+        );
+      allow delete: if isValidStaffDocId(staffDocId) && (
+        isOwner() ||
+        (isAdminOrManager() && !(existing().role in ['OWNER', 'ADMIN']))
+      );
+    }
+
+    match /restaurant_settings/{settingId} {
+      allow get: if isSignedIn() && isValidId(settingId);
+      allow list: if isSignedIn() && isRestaurantId(resource.data.restaurantId);
+      allow create, update: if isAdminOrManager() && isValidId(settingId) && isValidRestaurantSettings(incoming());
+      allow delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isValidId(notificationId) && (existing().targetUserId == request.auth.uid || isStaff());
+      allow list: if isSignedIn() && (resource.data.targetUserId == request.auth.uid || (isStaff() && isRestaurantId(resource.data.restaurantId)));
+      allow create: if isSignedIn() && isValidId(notificationId) &&
+        incoming().createdBy == request.auth.uid &&
+        isValidNotification(incoming());
+      allow update: if isSignedIn() && isValidId(notificationId) &&
+        isValidNotification(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().createdBy == existing().createdBy && (
+          isStaff() || (
+            existing().targetUserId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['read', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdminOrManager() && isValidId(notificationId);
+    }
+  }
+}

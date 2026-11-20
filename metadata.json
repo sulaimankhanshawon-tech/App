@@ -1,0 +1,6 @@
+{
+  "name": "Asil Al Tawooq",
+  "description": "Smart Restaurant Management & QR Ordering System for Asil Al Tawooq (Jeddah, KSA) connecting Customers, Waiters, Kitchen Display (KDS), Billing, and Owner Admin.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

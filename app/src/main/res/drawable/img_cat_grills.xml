@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="160dp"
+    android:height="120dp"
+    android:viewportWidth="160"
+    android:viewportHeight="120">
+    <path android:pathData="M0,0h160v120h-160z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0" android:startY="0" android:endX="160" android:endY="120" android:type="linear">
+                <item android:color="#FF3B2214" android:offset="0.0" />
+                <item android:color="#FF8C3D12" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Plate -->
+    <path android:fillColor="#FFF8EFE2" android:pathData="M24,60a56,36 0 1,0 112,0a56,36 0 1,0 -112,0z" />
+    <path android:fillColor="#FFEDE0CE" android:pathData="M32,60a48,29 0 1,0 96,0a48,29 0 1,0 -96,0z" />
+    <!-- Skewer lines -->
+    <path android:fillColor="#FF7A5130" android:pathData="M36,49h88v3h-88z" />
+    <path android:fillColor="#FF7A5130" android:pathData="M36,69h88v3h-88z" />
+    <!-- Tawook cubes -->
+    <path android:fillColor="#FFD97724" android:pathData="M48,43h14v14h-14z" />
+    <path android:fillColor="#FFC25912" android:pathData="M68,42h15v15h-15z" />
+    <path android:fillColor="#FFD97724" android:pathData="M89,43h14v14h-14z" />
+    <path android:fillColor="#FFC25912" android:pathData="M50,63h14v14h-14z" />
+    <path android:fillColor="#FFD97724" android:pathData="M70,62h15v15h-15z" />
+    <path android:fillColor="#FFC25912" android:pathData="M91,63h14v14h-14z" />
+    <!-- Garlic Toum & herbs -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M110,56a9,7 0 1,0 18,0a9,7 0 1,0 -18,0z" />
+    <path android:fillColor="#FF2D6A4F" android:pathData="M40,56a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+</vector>

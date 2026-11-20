@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="160dp"
+    android:height="120dp"
+    android:viewportWidth="160"
+    android:viewportHeight="120">
+    <path android:pathData="M0,0h160v120h-160z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0" android:startY="0" android:endX="160" android:endY="120" android:type="linear">
+                <item android:color="#FF5C2C16" android:offset="0.0" />
+                <item android:color="#FFC86D1F" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFF8EFE2" android:pathData="M24,62a56,34 0 1,0 112,0a56,34 0 1,0 -112,0z" />
+    <!-- Shawarma wrap rolls -->
+    <path android:fillColor="#FFE5B87E" android:pathData="M42,46h54a8,8 0 0,1 8,8v2a8,8 0 0,1 -8,8h-54a8,8 0 0,1 -8,-8v-2a8,8 0 0,1 8,-8z" />
+    <path android:fillColor="#FFD49E5E" android:pathData="M46,66h54a8,8 0 0,1 8,8v2a8,8 0 0,1 -8,8h-54a8,8 0 0,1 -8,-8v-2a8,8 0 0,1 8,-8z" />
+    <path android:fillColor="#FF9E471B" android:pathData="M56,48h6v14h-6z" />
+    <path android:fillColor="#FF9E471B" android:pathData="M74,48h6v14h-6z" />
+    <path android:fillColor="#FF9E471B" android:pathData="M62,68h6v14h-6z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M110,55a10,8 0 1,0 20,0a10,8 0 1,0 -20,0z" />
+    <path android:fillColor="#FFB91C1C" android:pathData="M108,74a7,5 0 1,0 14,0a7,5 0 1,0 -14,0z" />
+</vector>

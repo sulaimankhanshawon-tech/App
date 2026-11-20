@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="160dp"
+    android:height="120dp"
+    android:viewportWidth="160"
+    android:viewportHeight="120">
+    <path android:pathData="M0,0h160v120h-160z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0" android:startY="0" android:endX="160" android:endY="120" android:type="linear">
+                <item android:color="#FF78350F" android:offset="0.0" />
+                <item android:color="#FFD97706" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Brass rimmed platter -->
+    <path android:fillColor="#FFD4AF37" android:pathData="M28,62a52,35 0 1,0 104,0a52,35 0 1,0 -104,0z" />
+    <path android:fillColor="#FFFCE7A8" android:pathData="M35,62a45,29 0 1,0 90,0a45,29 0 1,0 -90,0z" />
+    <!-- Saffron rice mound & spiced chicken -->
+    <path android:fillColor="#FFF59E0B" android:pathData="M45,60a35,20 0 1,0 70,0a35,20 0 1,0 -70,0z" />
+    <path android:fillColor="#FF9A3412" android:pathData="M58,50a22,13 0 1,0 44,0a22,13 0 1,0 -44,0z" />
+    <path android:fillColor="#FF2D6A4F" android:pathData="M50,62a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+    <path android:fillColor="#FF2D6A4F" android:pathData="M104,58a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+</vector>

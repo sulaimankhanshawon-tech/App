@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="160dp"
+    android:height="120dp"
+    android:viewportWidth="160"
+    android:viewportHeight="120">
+    <path android:pathData="M0,0h160v120h-160z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0" android:startY="0" android:endX="160" android:endY="120" android:type="linear">
+                <item android:color="#FF0F4C5C" android:offset="0.0" />
+                <item android:color="#FF2A9D8F" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Tall chilled glass -->
+    <path android:fillColor="#FFE0F2FE" android:pathData="M62,24h36l-4,70h-28z" />
+    <path android:fillColor="#FFBEF264" android:pathData="M65,42h30l-3,48h-24z" />
+    <path android:fillColor="#FF15803D" android:pathData="M72,38a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z" />
+    <path android:fillColor="#FFFACC15" android:pathData="M90,28a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z" />
+</vector>

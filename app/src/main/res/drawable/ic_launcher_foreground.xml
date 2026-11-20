@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bold stylized restaurant cloche / dome and charcoal flame emblem centered in 66dp safe zone -->
+    <path
+        android:fillColor="#FFE68A2E"
+        android:pathData="M54,26C47,34 40,40 40,49C40,56.7 46.3,63 54,63C61.7,63 68,56.7 68,49C68,42 63,37 59,33C59,37 56.5,40 53.5,40C51.5,40 50,38 50,36C50,32.5 52,29 54,26Z" />
+    <path
+        android:fillColor="#FFFDFBF7"
+        android:pathData="M54,43C51.2,46.5 49,49.5 49,53C49,55.8 51.2,58 54,58C56.8,58 59,55.8 59,53C59,50 57,47 54,43Z" />
+    <path
+        android:fillColor="#FFE68A2E"
+        android:pathData="M31,67H77C78.7,67 80,68.3 80,70C80,71.7 78.7,73 77,73H31C29.3,73 28,71.7 28,70C28,68.3 29.3,67 31,67Z" />
+    <path
+        android:fillColor="#FFFDFBF7"
+        android:pathData="M36,76H72C72,78.8 64,81 54,81C44,81 36,78.8 36,76Z" />
+</vector>

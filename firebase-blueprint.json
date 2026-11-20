@@ -1,0 +1,686 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account profile synchronized on sign-in.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "staffRole": { "type": "string" },
+        "activeTableLabel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "restaurantId", "displayName", "staffRole", "createdAt", "updatedAt"]
+    },
+    "RoleDefinition": {
+      "title": "RoleDefinition",
+      "description": "Role-based access permissions for Owner, Manager, Waiter, and Kitchen Staff.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "code": { "type": "string", "enum": ["OWNER", "MANAGER", "WAITER", "KITCHEN"] },
+        "titleEn": { "type": "string" },
+        "titleAr": { "type": "string" },
+        "permissions": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "code", "titleEn", "titleAr", "permissions", "updatedAt"]
+    },
+    "CategoryEntity": {
+      "title": "CategoryEntity",
+      "description": "Food menu category linked to a default kitchen station.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "code": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "defaultStation": { "type": "string" },
+        "sortOrder": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "code", "nameEn", "nameAr", "defaultStation", "sortOrder", "active", "updatedAt"]
+    },
+    "ProductImage": {
+      "title": "ProductImage",
+      "description": "Cloud-stored compressed dish photograph uploaded by Admin/Manager.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "productId": { "type": "string" },
+        "mimeType": { "type": "string" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "sizeBytes": { "type": "integer" },
+        "base64Data": { "type": "string" },
+        "uploadedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "mimeType", "width", "height", "sizeBytes", "base64Data", "uploadedBy", "createdAt", "updatedAt"]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "Dish or beverage item in the Asil Al Tawooq menu.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "descriptionEn": { "type": "string" },
+        "descriptionAr": { "type": "string" },
+        "ingredientsEn": { "type": "string" },
+        "ingredientsAr": { "type": "string" },
+        "allergens": { "type": "array" },
+        "category": {
+          "type": "string",
+          "enum": [
+            "CHARCOAL_GRILLS",
+            "CHICKEN_TAWOOK",
+            "SHAWARMA",
+            "RICE_MEALS",
+            "SANDWICHES",
+            "PASTA",
+            "APPETIZERS",
+            "SAUCES",
+            "COLD_DRINKS",
+            "SPECIAL_DEALS"
+          ]
+        },
+        "kitchenStation": {
+          "type": "string",
+          "enum": ["GRILL", "SHAWARMA", "SANDWICH", "PASTA", "DRINKS", "GENERAL"]
+        },
+        "spiceLevel": {
+          "type": "string",
+          "enum": ["MILD", "MEDIUM", "HOT"]
+        },
+        "portionSize": { "type": "string" },
+        "priceSar": { "type": "number" },
+        "prepMinutes": { "type": "integer" },
+        "available": { "type": "boolean" },
+        "hidden": { "type": "boolean" },
+        "featured": { "type": "boolean" },
+        "isMealDeal": { "type": "boolean" },
+        "dealSummary": { "type": "string" },
+        "offerLabel": { "type": "string" },
+        "imageKey": { "type": "string" },
+        "imageId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "sizes": { "type": "array" },
+        "extras": { "type": "array" },
+        "demoData": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "restaurantId",
+        "nameEn",
+        "nameAr",
+        "descriptionEn",
+        "category",
+        "kitchenStation",
+        "spiceLevel",
+        "portionSize",
+        "priceSar",
+        "prepMinutes",
+        "available",
+        "hidden",
+        "featured",
+        "imageKey",
+        "demoData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RestaurantTable": {
+      "title": "RestaurantTable",
+      "description": "Physical dining table with active toggle, live service state, and unique QR payload.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "label": { "type": "string" },
+        "zone": { "type": "string" },
+        "capacity": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "status": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "OCCUPIED",
+            "ORDERING",
+            "FOOD_PREP",
+            "FOOD_SERVED",
+            "BILL_REQUESTED",
+            "NEEDS_ASSISTANCE"
+          ]
+        },
+        "assignedWaiterId": { "type": "string" },
+        "assignedWaiterName": { "type": "string" },
+        "currentOrderId": { "type": "string" },
+        "billStatus": {
+          "type": "string",
+          "enum": ["NONE", "OPEN", "REQUESTED", "PAID"]
+        },
+        "needsAssistance": { "type": "boolean" },
+        "activeRequestCount": { "type": "integer" },
+        "qrCodeId": { "type": "string" },
+        "qrPayload": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "restaurantId",
+        "tableNumber",
+        "label",
+        "zone",
+        "capacity",
+        "active",
+        "status",
+        "assignedWaiterName",
+        "billStatus",
+        "needsAssistance",
+        "activeRequestCount",
+        "qrPayload",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TableQrCode": {
+      "title": "TableQrCode",
+      "description": "Unique QR code descriptor bound to a specific table.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "tableLabel": { "type": "string" },
+        "qrPayload": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "tableId", "tableNumber", "tableLabel", "qrPayload", "active", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer table order synced across Customer, Waiter, Kitchen Display, Billing, and Admin.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "orderNumber": { "type": "string" },
+        "clientRequestId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["NEW_ORDER", "ACCEPTED", "PREPARING", "READY", "SERVED", "PAID", "CANCELLED"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["NORMAL", "HIGH", "URGENT"]
+        },
+        "waiterConfirmed": { "type": "boolean" },
+        "waiterConfirmedBy": { "type": "string" },
+        "items": { "type": "array" },
+        "specialInstructions": { "type": "string" },
+        "allergySummary": { "type": "string" },
+        "subtotalSar": { "type": "number" },
+        "vatSar": { "type": "number" },
+        "discountSar": { "type": "number" },
+        "tipSar": { "type": "number" },
+        "totalSar": { "type": "number" },
+        "paidAmountSar": { "type": "number" },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["UNPAID", "PARTIAL", "PAID"]
+        },
+        "paymentMethod": { "type": "string" },
+        "assignedWaiterName": { "type": "string" },
+        "demoData": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "restaurantId",
+        "tableId",
+        "tableNumber",
+        "orderNumber",
+        "customerName",
+        "status",
+        "priority",
+        "items",
+        "subtotalSar",
+        "vatSar",
+        "discountSar",
+        "tipSar",
+        "totalSar",
+        "paidAmountSar",
+        "paymentStatus",
+        "demoData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OrderItemRecord": {
+      "title": "OrderItemRecord",
+      "description": "Normalized order line item routed to a kitchen station.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "productId": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "kitchenStation": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "unitPriceSar": { "type": "number" },
+        "lineTotalSar": { "type": "number" },
+        "selectedSize": { "type": "string" },
+        "spiceLevel": { "type": "string" },
+        "extras": { "type": "array" },
+        "notes": { "type": "string" },
+        "allergyNote": { "type": "string" },
+        "itemStatus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "orderId",
+        "userId",
+        "restaurantId",
+        "tableId",
+        "tableNumber",
+        "productId",
+        "nameEn",
+        "kitchenStation",
+        "quantity",
+        "unitPriceSar",
+        "lineTotalSar",
+        "itemStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "KitchenStationEntity": {
+      "title": "KitchenStationEntity",
+      "description": "Kitchen preparation station configuration.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "code": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "active": { "type": "boolean" },
+        "sortOrder": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "code", "nameEn", "nameAr", "active", "sortOrder", "updatedAt"]
+    },
+    "ServiceRequest": {
+      "title": "ServiceRequest",
+      "description": "Real-time table service request from customer to waiter dashboard.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "requestType": {
+          "type": "string",
+          "enum": ["CALL_WAITER", "WATER", "EXTRA_SAUCE", "CUTLERY", "CLEANING", "BILL", "OTHER"]
+        },
+        "note": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED"]
+        },
+        "assignedWaiterName": { "type": "string" },
+        "demoData": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "restaurantId",
+        "tableId",
+        "tableNumber",
+        "requestType",
+        "status",
+        "demoData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Payment transaction or verified cash/transfer payment request.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "amountSar": { "type": "number" },
+        "vatSar": { "type": "number" },
+        "tipSar": { "type": "number" },
+        "method": {
+          "type": "string",
+          "enum": ["MADA", "APPLE_PAY", "GOOGLE_PAY", "CARD", "BANK_TRANSFER", "CASH_REQUEST"]
+        },
+        "splitMode": {
+          "type": "string",
+          "enum": ["FULL", "EQUAL", "BY_ITEMS"]
+        },
+        "gatewayProvider": { "type": "string" },
+        "gatewayTransactionId": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["VERIFIED_PAID", "PENDING_CASH_COLLECTION", "PENDING_BANK_TRANSFER", "FAILED"]
+        },
+        "receiptEmail": { "type": "string" },
+        "selectedItemIds": { "type": "array" },
+        "demoData": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "restaurantId",
+        "orderId",
+        "tableNumber",
+        "amountSar",
+        "vatSar",
+        "tipSar",
+        "method",
+        "splitMode",
+        "gatewayProvider",
+        "gatewayTransactionId",
+        "status",
+        "demoData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LoyaltyProfile": {
+      "title": "LoyaltyProfile",
+      "description": "Customer digital loyalty card, points, tier, and birthday rewards.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "points": { "type": "integer" },
+        "totalSpentSar": { "type": "number" },
+        "tier": { "type": "string", "enum": ["BRONZE", "SILVER", "GOLD", "ROYAL"] },
+        "birthdayMmDd": { "type": "string" },
+        "redeemedRewards": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "restaurantId",
+        "displayName",
+        "points",
+        "totalSpentSar",
+        "tier",
+        "redeemedRewards",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer post-order review and ratings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "authorName": { "type": "string" },
+        "overallRating": { "type": "integer" },
+        "foodRating": { "type": "integer" },
+        "serviceRating": { "type": "integer" },
+        "comment": { "type": "string" },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "restaurantId",
+        "tableNumber",
+        "authorName",
+        "overallRating",
+        "foodRating",
+        "serviceRating",
+        "comment",
+        "published",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GameSession": {
+      "title": "GameSession",
+      "description": "Multiplayer table trivia and food guessing game session.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "hostUserId": { "type": "string" },
+        "roomCode": { "type": "string" },
+        "tableNumber": { "type": "integer" },
+        "gameType": { "type": "string", "enum": ["TABLE_TRIVIA", "FOOD_GUESSING", "QUICK_QUIZ"] },
+        "status": { "type": "string", "enum": ["WAITING", "ACTIVE", "FINISHED"] },
+        "currentQuestionIndex": { "type": "integer" },
+        "playerNames": { "type": "array" },
+        "playerScores": { "type": "object" },
+        "participantUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "restaurantId",
+        "hostUserId",
+        "roomCode",
+        "tableNumber",
+        "gameType",
+        "status",
+        "currentQuestionIndex",
+        "playerNames",
+        "playerScores",
+        "participantUids",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StaffMember": {
+      "title": "StaffMember",
+      "description": "Restaurant staff profile and RBAC role assignment.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["OWNER", "MANAGER", "WAITER", "KITCHEN", "ADMIN", "CASHIER"] },
+        "active": { "type": "boolean" },
+        "assignedZone": { "type": "string" },
+        "ordersHandled": { "type": "integer" },
+        "avgResponseSec": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "restaurantId",
+        "name",
+        "email",
+        "role",
+        "active",
+        "assignedZone",
+        "ordersHandled",
+        "avgResponseSec",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RestaurantSettings": {
+      "title": "RestaurantSettings",
+      "description": "Central restaurant configuration, Wi-Fi, VAT, opening hours, and gateway endpoints.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "restaurantNameEn": { "type": "string" },
+        "restaurantNameAr": { "type": "string" },
+        "city": { "type": "string" },
+        "wifiSsid": { "type": "string" },
+        "wifiPassword": { "type": "string" },
+        "vatPercent": { "type": "number" },
+        "openingHours": { "type": "string" },
+        "googleReviewUrl": { "type": "string" },
+        "gatewayProvider": { "type": "string", "enum": ["MOYASAR", "HYPERPAY", "TAP"] },
+        "gatewayPublicKey": { "type": "string" },
+        "gatewayMode": { "type": "string", "enum": ["TEST", "LIVE"] },
+        "gatewayEndpoint": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "restaurantId",
+        "restaurantNameEn",
+        "restaurantNameAr",
+        "city",
+        "wifiSsid",
+        "wifiPassword",
+        "vatPercent",
+        "openingHours",
+        "googleReviewUrl",
+        "gatewayProvider",
+        "gatewayMode",
+        "updatedAt"
+      ]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "Real-time notification routed to role dashboards.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "targetRole": { "type": "string", "enum": ["CUSTOMER", "WAITER", "KITCHEN", "MANAGER", "OWNER", "CASHIER", "ADMIN"] },
+        "targetUserId": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": ["ORDER", "KITCHEN", "DELAY", "READY", "REQUEST", "PAYMENT", "BILL", "FEEDBACK"]
+        },
+        "read": { "type": "boolean" },
+        "tableNumber": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "restaurantId",
+        "targetRole",
+        "targetUserId",
+        "createdBy",
+        "title",
+        "message",
+        "category",
+        "read",
+        "tableNumber",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authenticated user profile and assigned table/role metadata."
+    },
+    "/roles/{roleId}": {
+      "schema": { "$ref": "#/entities/RoleDefinition" },
+      "description": "RBAC role definitions for Owner, Manager, Waiter, and Kitchen Staff."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/CategoryEntity" },
+      "description": "Food categories and default kitchen station mappings."
+    },
+    "/product_images/{imageId}": {
+      "schema": { "$ref": "#/entities/ProductImage" },
+      "description": "Cloud-hosted compressed product photographs."
+    },
+    "/menu_items/{itemId}": {
+      "schema": { "$ref": "#/entities/MenuItem" },
+      "description": "Restaurant menu dishes, prices in SAR, ingredients, allergens, and kitchen stations."
+    },
+    "/restaurant_tables/{tableId}": {
+      "schema": { "$ref": "#/entities/RestaurantTable" },
+      "description": "Dining hall and patio tables with live status, active toggle, and QR payloads."
+    },
+    "/qr_codes/{qrId}": {
+      "schema": { "$ref": "#/entities/TableQrCode" },
+      "description": "Unique QR code definitions mapped 1:1 to tables."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders synchronized across Waiter, Kitchen Display, Billing, and Admin."
+    },
+    "/order_items/{orderItemId}": {
+      "schema": { "$ref": "#/entities/OrderItemRecord" },
+      "description": "Individual ordered dish line items routed by kitchen station."
+    },
+    "/kitchen_stations/{stationId}": {
+      "schema": { "$ref": "#/entities/KitchenStationEntity" },
+      "description": "Kitchen station definitions."
+    },
+    "/service_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/ServiceRequest" },
+      "description": "Live customer table service requests."
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentRecord" },
+      "description": "Verified payment transactions and cash/transfer verification requests."
+    },
+    "/loyalty_profiles/{userId}": {
+      "schema": { "$ref": "#/entities/LoyaltyProfile" },
+      "description": "Customer digital loyalty card, points, and rewards."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Customer feedback and star ratings."
+    },
+    "/game_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/GameSession" },
+      "description": "Multiplayer table trivia and food guessing game rooms."
+    },
+    "/staff/{staffUid}": {
+      "schema": { "$ref": "#/entities/StaffMember" },
+      "description": "Staff accounts, role permissions, and performance stats."
+    },
+    "/restaurant_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/RestaurantSettings" },
+      "description": "Central restaurant settings, Wi-Fi info, VAT rate, and gateway settings."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/NotificationItem" },
+      "description": "Role-targeted real-time notifications."
+    }
+  }
+}
